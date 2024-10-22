@@ -1,0 +1,32 @@
+services:
+  backend:
+    build: ./backend
+    container_name: avantia-backend
+    ports:
+      - 5000:5000
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+  elasticsearch:
+    image: elasticsearch:7.8.1
+    ports:
+      - 9200:9200
+    healthcheck:
+      test: curl -s http://elasticsearch:9200 >/dev/null || exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 50
+    environment:
+      discovery.type: 'single-node'
+      xpack.security.enabled: 'true'
+      ELASTIC_PASSWORD: 'password'
+      ES_JAVA_OPTS: '-Xmx2g -Xms2g'
+  kibana:
+    image: kibana:7.8.1
+    volumes:
+      - ./kibana.yml:/usr/share/kibana/config/kibana.yml
+    ports:
+      - 5601:5601
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
